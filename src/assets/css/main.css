@@ -1,0 +1,422 @@
+/* Base styles and reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Очень важно для правильных размеров элементов */
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    color: #E5E7EB;
+    background: #111827; /* Fallback */
+    /* Динамический градиентный фон с множеством слоев для эффекта параллакса */
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 70%),
+        radial-gradient(circle at 90% 80%, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 70%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(180deg, #111827 0%, #1a2233 50%, #222c42 100%);
+    background-size:
+        200px 200px,
+        250px 250px,
+        300px 300px,
+        100% 200%;
+    background-position:
+        0 0,
+        0 0,
+        0 0,
+        center top;
+    background-repeat: repeat, repeat, repeat, no-repeat;
+    background-attachment: scroll, scroll, scroll, scroll;
+    transition: background-position 0.2s ease-out;
+
+    overflow-x: hidden;
+    position: relative;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+body::before { /* Параллакс эффект для фона */
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -3;
+    background: linear-gradient(45deg, rgba(30, 60, 90, 0.1) 0%, rgba(0, 0, 0, 0) 50%, rgba(30, 60, 90, 0.1) 100%);
+    background-size: 200% 200%;
+    animation: subtleParallax 60s ease infinite alternate;
+}
+
+@keyframes subtleParallax {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+}
+
+/* Global Navigation Styles for menu */
+.main-navigation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100%;
+    background-color: #1F2937;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    transform: translateX(-100%); /* Изначально скрыто */
+    opacity: 0; /* Изначально прозрачно */
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: 1000;
+    padding-top: 80px;
+    visibility: hidden; /* Изначально скрыто, чтобы не занимать место */
+}
+
+
+.main-navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-navigation li {
+    margin: 0;
+}
+
+.main-navigation a {
+    display: block;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    color: white;
+    background: transparent;
+    text-decoration: none;
+    border: none;
+    font-size: 1.1rem;
+    transition: background-color 0.2s ease;
+}
+
+.main-navigation a:hover {
+    background-color: rgba(147, 197, 253, 0.1); /* Бледно-голубой */
+}
+
+
+body.menu-open .main-navigation {
+    transform: translateX(0); /* Показать меню */
+    opacity: 1; /* Сделать видимым */
+    visibility: visible; /* Сделать видимым сразу при открытии, чтобы transition работал */
+}
+
+/* Overlay when menu is open */
+body.menu-open::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    pointer-events: none;
+}
+
+body.menu-open::after {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Modal specific styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background-color: #1F2937;
+    padding: 2.5rem; /* ВАЖНО для отступов внутри модального окна */
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    position: relative;
+    width: 90%;
+    max-width: 450px;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(55, 65, 81, 0.7);
+}
+
+.modal-overlay.is-visible .modal-content {
+    transform: scale(1);
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #D1D5DB;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover {
+    color: #EF4444;
+}
+
+.modal-title {
+    color: #93C5FD;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+}
+
+/* --- ВАЖНО: Стили для полей ввода (form-input) --- */
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #4B5563;
+    background-color: #374151;
+    color: #E5E7EB;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+    color: #9CA3AF;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* --- Стили для основной кнопки (button-primary) --- */
+/* --- Обновленные стили для основной кнопки (button-primary) --- */
+.button-primary {
+    display: block; /* Делает кнопку блочным элементом, чтобы она занимала всю ширину */
+    width: 100%; /* Задает полную ширину родительского контейнера */
+    padding: 0.8rem 1.8rem; /* Отступы внутри кнопки: сверху/снизу 0.8rem, слева/справа 1.8rem */
+    border-radius: 0.5rem; /* Скругление углов кнопки */
+    text-decoration: none; /* Убирает подчеркивание для ссылок (если используется с тегом <a>) */
+    font-weight: bold; /* Делает текст жирным */
+    font-size: 1.1rem; /* Размер шрифта */
+    transition: all 0.3s ease; /* Плавный переход для всех анимируемых свойств */
+    cursor: pointer; /* Изменяет курсор на "указатель" при наведении */
+    border: none; /* Убирает стандартную границу кнопки */
+    background-color: #3B82F6; /* Яркий синий фон кнопки */
+    color: white; /* Белый цвет текста */
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); /* Мягкая тень кнопки */
+    text-align: center; /* Центрирует текст внутри кнопки */
+    box-sizing: border-box; /* Включает padding и border в общую ширину/высоту элемента */
+}
+
+.button-primary:hover {
+    background-color: #2563EB; /* Темнее синий при наведении */
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6); /* Более выраженная тень */
+    transform: translateY(-2px); /* Небольшой подъем кнопки вверх */
+}
+
+/* --- Новые стили для вторичной кнопки (button-secondary) --- */
+.button-secondary {
+    display: block;
+    width: 100%;
+    padding: 0.8rem 1.8rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #60A5FA; /* Светло-синяя рамка */
+    background-color: transparent; /* Прозрачный фон */
+    color: #60A5FA; /* Светло-синий текст */
+    box-shadow: 0 4px 15px rgba(96, 165, 250, 0.2);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.button-secondary:hover {
+    background-color: rgba(96, 165, 250, 0.1); /* Легкий синий фон при наведении */
+    box-shadow: 0 6px 20px rgba(96, 165, 250, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Styles for body when menu is open (or modal is open) */
+body.menu-open,
+body.modal-open { /* Добавлено modal-open для ясности */
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    padding-right: var(--scrollbar-width, 0px); /* Используется для компенсации скроллбара */
+}
+
+/* Также отключение событий указателя для основного контента */
+body.menu-open #hero,
+body.menu-open main,
+body.menu-open footer,
+body.modal-open #hero,
+body.modal-open main,
+body.modal-open footer {
+    pointer-events: none;
+}
+
+/* --- Content Card (из разделов) --- */
+.content-card {
+    background-color: rgba(31, 41, 55, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 2.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+    will-change: opacity, transform;
+    border: 1px solid rgba(55, 65, 81, 0.7);
+    margin-bottom: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.content-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+
+.content-card h2 {
+    color: #93C5FD;
+    text-shadow: 0 0 10px rgba(147, 197, 253, 0.3);
+}
+
+/* Анимация прокрутки */
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.animate-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Эти анимации применяются к дочерним элементам, когда родитель 'is-visible' */
+.content-card.is-visible h2,
+.content-card.is-visible p {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.7s forwards;
+}
+
+.content-card.is-visible h2 { animation-delay: 0.2s; }
+.content-card.is-visible p:nth-of-type(1) { animation-delay: 0.35s; }
+.content-card.is-visible p:nth-of-type(2) { animation-delay: 0.5s; }
+
+@keyframes fadeInSlideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tailwind-like utility classes (ОЧЕНЬ ВАЖНО) */
+.hidden { display: none !important; } /* Важно, чтобы это было !important */
+.container { width: 100%; padding-right: 15px; padding-left: 15px; margin-right: auto; margin-left: auto; }
+@media (min-width: 640px) { .container { max-width: 640px; } }
+@media (min-width: 768px) { .container { max-width: 768px; } }
+@media (min-width: 1024px) { .container { max-width: 1024px; } }
+@media (min-width: 1280px) { .container { max-width: 1280px; } }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+
+/* Отступы */
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-10 { margin-bottom: 2.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+
+.font-bold { font-weight: 700; }
+.leading-tight { line-height: 1.25; }
+.leading-relaxed { line-height: 1.625; }
+.max-w-2xl { max-width: 42rem; }
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-lg { font-size: 1.125rem; } /* 18px */
+.font-semibold { font-weight: 600; }
+
+/* Цвета текста */
+.text-blue-400 { color: #60A5FA; }
+.text-gray-200 { color: #E5E7EB; }
+.text-gray-400 { color: #9CA3AF; }
+.text-red-400 { color: #EF4444; } /* Для сообщений об ошибках */
+
+.hover\:underline:hover { text-decoration: underline; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+
+@media (min-width: 640px) {
+    .sm\:flex-row { flex-direction: row; }
+    .sm\:space-x-6 > :not([hidden]) ~ :not([hidden]) { margin-left: 1.5rem; }
+    .sm\:mb-0 { margin-bottom: 0; }
+}
+.justify-center { justify-content: center; }
+.items-center { align-items: center; }
+
+
+.bg-gray-900 { background-color: #111827; }
+
+/* Font sizes */
+.text-5xl { font-size: 3rem; }
+.md\:text-7xl { font-size: 4.5rem; }
+.text-xl { font-size: 1.25rem; }
+.md\:text-2xl { font-size: 1.5rem; }
+.text-3xl { font-size: 1.875rem; }
+.md\:text-4xl { font-size: 2.25rem; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .text-5xl { font-size: 2.5rem; }
+    .md\:text-7xl { font-size: 3rem; }
+    .text-xl { font-size: 1.125rem; }
+    .md\:text-2xl { font-size: 1.25rem; }
+    .text-3xl { font-size: 1.5rem; }
+    .md\:text-4xl { font-size: 1.875rem; }
+
+    .hero-section {
+        min-height: 70vh;
+        padding: 2rem 1rem;
+    }
+    .section {
+        padding: 2.5rem 0;
+    }
+    .content-card {
+        padding: 1.5rem;
+    }
+}

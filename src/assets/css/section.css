@@ -1,0 +1,298 @@
+/* Common styles for section components */
+.section {
+    padding: 4rem 0; /* Достаточный отступ сверху и снизу для каждой секции */
+    position: relative; /* Для Z-индекса, если понадобится */
+}
+
+.content-card {
+    background-color: rgba(31, 41, 55, 0.95); /* Сделаем его менее прозрачным */
+    backdrop-filter: blur(12px); /* Чуть больше размытия */
+    padding: 2.5rem; /* Увеличим отступы внутри карточки */
+    border-radius: 0.75rem; /* Чуть более скругленные углы */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5); /* Более выраженная тень */
+    will-change: opacity, transform;
+    border: 1px solid rgba(55, 65, 81, 0.7); /* Чуть более заметная граница */
+    margin-bottom: 2rem; /* Добавим отступ снизу, чтобы не сливались */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Добавляем transition для hover-эффекта */
+    position: relative; /* Важно для позиционирования псевдоэлемента */
+    overflow: hidden;
+}
+
+
+.content-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image:
+        /* ВРЕМЕННО УВЕЛИЧИМ ПРОЗРАЧНОСТЬ ЛИНИЙ */
+        linear-gradient(0deg, transparent 95%, rgba(147, 197, 253, 0.2) 100%), /* Было 99% transparent, 0.03 opacity */
+        linear-gradient(90deg, transparent 95%, rgba(147, 197, 253, 0.2) 100%); /* Было 99% transparent, 0.03 opacity */
+    background-size: 30px 30px;
+    opacity: 0.17; /* ВРЕМЕННО УВЕЛИЧИМ ОБЩУЮ ПРОЗРАЧНОСТЬ ПАТТЕРНА */
+    z-index: -1;
+    animation: moveGrid 60s linear infinite;
+    pointer-events: none;
+    border: 1px solid red; /* ВРЕМЕННО ДОБАВИМ КРАСНУЮ ГРАНИЦУ, ЧТОБЫ УВИДЕТЬ САМ ПСЕВДОЭЛЕМЕНТ */
+}
+
+
+
+.content-card:hover {
+    transform: translateY(-5px); /* Легкий подъем при наведении */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6); /* Более выраженная тень при наведении */
+}
+
+.content-card h2 {
+    color: #93C5FD;
+    text-shadow: 0 0 10px rgba(147, 197, 253, 0.3); /* Легкая тень для текста заголовка */
+}
+
+/* Остальные стили animate-on-scroll без изменений */
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.animate-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.content-card.is-visible h2,
+.content-card.is-visible p {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.7s forwards;
+}
+
+.content-card.is-visible h2 { animation-delay: 0.2s; }
+.content-card.is-visible p:nth-of-type(1) { animation-delay: 0.35s; }
+.content-card.is-visible p:nth-of-type(2) { animation-delay: 0.5s; }
+
+
+
+
+
+@keyframes fadeInSlideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 2.5rem 0;
+    }
+    .content-card {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.section-content-wrapper {
+    display: flex;
+    flex-direction: column; /* По умолчанию колонками (для мобильных) */
+    gap: 3rem; /* Пространство между карточкой и изображением */
+    align-items: center; /* Центрируем элементы по вертикали */
+    justify-content: center; /* Центрируем по горизонтали */
+}
+
+@media (min-width: 1024px) { /* На больших экранах располагаем рядом */
+    .section-content-wrapper.flex-lg-row {
+        flex-direction: row;
+    }
+    .section-content-wrapper.flex-lg-row-reverse {
+        flex-direction: row-reverse; /* Для чередования расположения */
+    }
+}
+
+/* Стили для изображений, теперь они вне content-card */
+.section-image {
+    width: 100%;
+    max-width: 500px; /* Увеличим максимальную ширину для лучшего вида */
+    height: auto;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    will-change: transform, opacity; /* Для плавных анимаций */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section-image:hover {
+    transform: translateY(-5px) scale(1.01); /* Легкий подъем и увеличение */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* Анимации появления для изображений */
+.animate-image-from-left {
+    opacity: 0;
+    transform: translateX(-50px);
+}
+
+.animate-image-from-left.is-visible {
+    animation: fadeInSlideLeftImage 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes fadeInSlideLeftImage {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-image-from-right {
+    opacity: 0;
+    transform: translateX(50px);
+}
+
+.animate-image-from-right.is-visible {
+    animation: fadeInSlideRightImage 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes fadeInSlideRightImage {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Общие стили для анимаций текста внутри карточек при их появлении */
+/* Эти стили можно оставить как есть или настроить под новые анимации карточек */
+.content-card.is-visible h2,
+.content-card.is-visible p {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.7s forwards; /* Используем более универсальную анимацию для текста */
+}
+.content-card.is-visible h2 { animation-delay: 0.2s; }
+.content-card.is-visible p:nth-of-type(1) { animation-delay: 0.35s; }
+.content-card.is-visible p:nth-of-type(2) { animation-delay: 0.5s; }
+
+
+.team-members-wrapper {
+    display: flex;
+    flex-direction: column; /* По умолчанию в колонку для мобильных */
+    gap: 2.5rem; /* Пространство между карточками */
+    align-items: center; /* Центрируем по горизонтали */
+    justify-content: center;
+    margin-top: 3rem; /* Отступ сверху от заголовка "О нас" */
+}
+
+
+
+@media (min-width: 768px) {
+    .team-members-wrapper {
+        flex-direction: row; /* На десктопах располагаем рядом */
+        flex-wrap: wrap; /* Позволяет переноситься на следующую строку, если слишком много */
+        gap: 3rem; /* Пространство между карточками */
+    }
+}
+
+/* Стили для одной "карточки профиля" */
+.member-card {
+    background-color: rgba(31, 41, 55, 0.9); /* Чуть темнее, чем content-card */
+    backdrop-filter: blur(8px);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    border: 1px solid rgba(55, 65, 81, 0.6);
+    text-align: center;
+    max-width: 320px; /* Ограничиваем ширину карточки */
+    width: 100%;
+    will-change: opacity, transform;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.member-card:hover {
+    transform: translateY(-8px) scale(1.02); /* Более выраженный подъем при наведении */
+    box-shadow: 0 18px 35px rgba(0,0,0,0.55);
+}
+
+.member-card-image {
+    width: 120px; /* Размер изображения профиля */
+    height: 120px;
+    border-radius: 50%; /* Круглое изображение */
+    object-fit: cover; /* Обрезка изображения для заполнения круга */
+    border: 3px solid #60A5FA; /* Яркая рамка */
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.5); /* Свечение рамки */
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.member-card:hover .member-card-image {
+    transform: scale(1.05); /* Легкое увеличение изображения при наведении на карточку */
+}
+
+.member-card h3 {
+    color: #93C5FD;
+    font-size: 1.75rem; /* Больше размер для имени */
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.member-card p {
+    color: #D1D5DB;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Анимации появления для member-card */
+/* Появление справа */
+@keyframes fadeInSlideRightMember {
+    from {
+        opacity: 0;
+        transform: translateX(80px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Появление слева */
+@keyframes fadeInSlideLeftMember {
+    from {
+        opacity: 0;
+        transform: translateX(-80px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Классы для анимаций */
+.member-card.animate-member-right.is-visible {
+    animation: fadeInSlideRightMember 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.member-card.animate-member-left.is-visible {
+    animation: fadeInSlideLeftMember 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Анимации для текста и изображения внутри member-card */
+.member-card.is-visible .member-card-image {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    animation: fadeInSlideUp 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 0.3s; /* Изображение появляется чуть позже карточки */
+}
+
+.member-card.is-visible h3 {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 0.5s; /* Имя появляется после изображения */
+}
+
+.member-card.is-visible p {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 0.7s; /* Описание появляется после имени */
+}
+
