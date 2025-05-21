@@ -96,7 +96,6 @@
 /* Hover effect for social links */
 .social-link:hover {
     color: #93C5FD; /* Lighter blue on hover */
-    text-decoration: underline; /* Add underline on hover */
 }
 
 /* Styles for the "Наши контакты:" paragraph within social links */

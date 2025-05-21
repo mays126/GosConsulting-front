@@ -73,7 +73,6 @@ const checkPasswordMismatch = () => {
 // Function to handle user login
 const loginUser = async () => {
   errorMessage.value = ''; // Clear previous errors
-
   try {
     const response = await fetch('http://localhost:8000/login', {
       method: 'POST',
@@ -81,7 +80,7 @@ const loginUser = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: loginUsername.value,
+        login: loginUsername.value,
         password: loginPassword.value,
       }),
     });
@@ -92,7 +91,6 @@ const loginUser = async () => {
       console.log('Вход успешен:', data);
       localStorage.setItem('AccessToken', data.access_token);
       emit('close-modal'); // Close modal on successful login
-      alert('Вход успешен!'); // Simple success feedback
     } else {
       errorMessage.value = data.message || 'Ошибка входа. Проверьте данные.';
       console.error('Ошибка входа:', data);
@@ -118,7 +116,7 @@ const registerUser = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: registerUsername.value,
+        login: registerUsername.value,
         password: registerPassword.value,
       }),
     });
@@ -129,7 +127,6 @@ const registerUser = async () => {
       console.log('Регистрация успешна:', data);
     //   localStorage.setItem('AccessToken', data.access_token);
       emit('close-modal'); // Close modal on successful registration
-      alert('Регистрация успешна! Теперь вы можете войти.'); // Simple success feedback
     } else {
       errorMessage.value = data.message || 'Ошибка регистрации. Попробуйте другое имя пользователя.';
       console.error('Ошибка регистрации:', data);
