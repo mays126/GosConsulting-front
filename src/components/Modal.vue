@@ -12,7 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['close-modal']);
 const router = useRouter(); // Получаем экземпляр роутера
 
-const handleAuthChange = inject('handleAuthChange'); // Инжектим функцию из App.vue
+const handleAuthChange = inject('handleAuthSuccess'); // Инжектим функцию из App.vue
 
 const activeForm = ref('login'); // 'login' или 'register'
 const loginUsername = ref('');
@@ -97,7 +97,9 @@ const loginUser = async () => {
       handleAuthChange(); // Уведомляем App.vue об изменении состояния аутентификации
       clearFieldsAndError(); // Очищаем поля
       emit('close-modal');   // Закрываем модальное окно
-      router.push({ name: 'Chat' }); // Перенаправляем на страницу чата
+      router.push({ name: 'Chat' }).finally(() => {
+        window.location.reload();
+      }); // Перенаправляем на страницу чата
     } else {
       if (response.status === 401 || response.status === 400) {
         errorMessage.value = data.detail || 'Неверный логин или пароль.';
@@ -138,7 +140,9 @@ const registerUser = async () => {
         handleAuthChange();
         clearFieldsAndError();
         emit('close-modal');
-        router.push({ name: 'Chat' });
+        router.push({ name: 'Chat' }).finally(() =>{
+          window.location.reload();
+        });
       } else {
         // Если авто-логина нет, переключаем на форму входа и показываем сообщение
         const registeredUsername = registerUsername.value; // Сохраняем перед очисткой

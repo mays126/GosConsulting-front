@@ -41,14 +41,19 @@ const router = createRouter({
 
 // Навигационный страж (Navigation Guard)
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('AccessToken'); // Простая проверка токена
+  console.log('router.beforeEach: Navigating from', from.name, 'to', to.name);
+  const isAuthenticated = !!localStorage.getItem('AccessToken');
+  console.log('router.beforeEach: isAuthenticated (from localStorage):', isAuthenticated);
 
-  if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
-    // Если пользователь пытается получить доступ к защищенному роуту без аутентификации,
-    // перенаправляем его на главную страницу (где он сможет войти через модальное окно).
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  console.log('router.beforeEach: Target route', to.name, 'requires auth:', requiresAuth);
+
+  if (requiresAuth && !isAuthenticated) {
+    console.log('router.beforeEach: Redirecting to Home (auth required, but not authenticated)');
     next({ name: 'Home' });
   } else {
-    next(); // В противном случае разрешаем переход
+    console.log('router.beforeEach: Allowing navigation to', to.name);
+    next();
   }
 });
 
