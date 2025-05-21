@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watchEffect, onMounted, nextTick } from 'vue';
+import { ref, watchEffect, inject } from 'vue';
+import { useRouter } from 'vue-router'; // Импортируем useRouter
 
 const props = defineProps({
   isVisible: {
@@ -9,91 +10,101 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-modal']);
+const router = useRouter(); // Получаем экземпляр роутера
 
-// Reactive state for managing form input values
+const handleAuthChange = inject('handleAuthChange'); // Инжектим функцию из App.vue
+
+const activeForm = ref('login'); // 'login' или 'register'
 const loginUsername = ref('');
 const loginPassword = ref('');
 const registerUsername = ref('');
 const registerPassword = ref('');
 const registerConfirmPassword = ref('');
-const errorMessage = ref(''); // To display server-side errors or other messages
+const errorMessage = ref('');
 
-// Watch for changes in isVisible to toggle body scroll lock
+// Функция для очистки полей и сообщения об ошибке
+const clearFieldsAndError = () => {
+  loginUsername.value = '';
+  loginPassword.value = '';
+  registerUsername.value = '';
+  registerPassword.value = '';
+  registerConfirmPassword.value = '';
+  errorMessage.value = '';
+};
+
 watchEffect(() => {
   if (props.isVisible) {
     document.body.style.overflow = 'hidden';
-    // Calculate scrollbar width and apply padding-right
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.paddingRight = `${scrollbarWidth}px`;
-    errorMessage.value = ''; // Clear error message when modal opens
+    // Не сбрасываем ошибку и активную форму здесь, чтобы сообщение об успешной регистрации оставалось
+    // errorMessage.value = '';
+    // activeForm.value = 'login'; // Начинаем с формы входа только при первом открытии
   } else {
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
-    // Clear form inputs when modal closes
-    loginUsername.value = '';
-    loginPassword.value = '';
-    registerUsername.value = '';
-    registerPassword.value = '';
-    registerConfirmPassword.value = '';
+    // Очищаем поля при закрытии модального окна
+    // clearFieldsAndError(); // Перенесено в обработчики закрытия
   }
 });
 
-// Functions to switch forms in the modal
+const handleCloseModal = () => {
+  clearFieldsAndError();
+  emit('close-modal');
+};
+
+
 const showLogin = () => {
-  nextTick(() => {
-    document.getElementById('login-form').classList.remove('hidden');
-    document.getElementById('register-form').classList.add('hidden');
-    document.getElementById('modal-title').textContent = 'Вход';
-    errorMessage.value = ''; // Clear messages when switching forms
-  });
+  activeForm.value = 'login';
+  errorMessage.value = ''; // Очищаем ошибку при переключении
 };
 
 const showRegister = () => {
-  nextTick(() => {
-    document.getElementById('login-form').classList.add('hidden');
-    document.getElementById('register-form').classList.remove('hidden');
-    document.getElementById('modal-title').textContent = 'Регистрация';
-    errorMessage.value = ''; // Clear messages when switching forms
-  });
+  activeForm.value = 'register';
+  errorMessage.value = ''; // Очищаем ошибку при переключении
 };
 
-// Check for password mismatch
 const checkPasswordMismatch = () => {
   if (registerPassword.value !== registerConfirmPassword.value && registerConfirmPassword.value !== '') {
     errorMessage.value = 'Пароли не совпадают!';
     return true;
   } else {
-    errorMessage.value = '';
+    // Очищаем ошибку только если это была ошибка о несовпадении паролей
+    if (errorMessage.value === 'Пароли не совпадают!') {
+      errorMessage.value = '';
+    }
     return false;
   }
 };
 
-// --- API Request Functions ---
-
-// Function to handle user login
 const loginUser = async () => {
-  errorMessage.value = ''; // Clear previous errors
+  errorMessage.value = '';
   try {
     const response = await fetch('http://localhost:8000/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         login: loginUsername.value,
         password: loginPassword.value,
       }),
+      credentials: 'include',
     });
 
     const data = await response.json();
-
     if (response.ok) {
       console.log('Вход успешен:', data);
       localStorage.setItem('AccessToken', data.access_token);
-      emit('close-modal'); // Close modal on successful login
+      handleAuthChange(); // Уведомляем App.vue об изменении состояния аутентификации
+      clearFieldsAndError(); // Очищаем поля
+      emit('close-modal');   // Закрываем модальное окно
+      router.push({ name: 'Chat' }); // Перенаправляем на страницу чата
     } else {
-      errorMessage.value = data.message || 'Ошибка входа. Проверьте данные.';
-      console.error('Ошибка входа:', data);
+      if (response.status === 401 || response.status === 400) {
+        errorMessage.value = data.detail || 'Неверный логин или пароль.';
+      } else {
+        errorMessage.value = data.detail || data.message || 'Ошибка входа. Проверьте данные.';
+      }
+      console.error('Ошибка входа:', data, response.status);
     }
   } catch (error) {
     console.error('Ошибка сети или сервера при входе:', error);
@@ -101,34 +112,48 @@ const loginUser = async () => {
   }
 };
 
-// Function to handle user registration
 const registerUser = async () => {
-  errorMessage.value = ''; // Clear previous errors
-
+  errorMessage.value = '';
   if (checkPasswordMismatch()) {
-    return; // Stop if passwords don't match
+    return;
   }
 
   try {
     const response = await fetch('http://localhost:8000/register', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         login: registerUsername.value,
         password: registerPassword.value,
       }),
+      credentials: 'include'
     });
 
     const data = await response.json();
-
     if (response.ok) {
       console.log('Регистрация успешна:', data);
-    //   localStorage.setItem('AccessToken', data.access_token);
-      emit('close-modal'); // Close modal on successful registration
+      // Если сервер возвращает токен при регистрации (авто-логин)
+      if (data.access_token) {
+        localStorage.setItem('AccessToken', data.access_token);
+        handleAuthChange();
+        clearFieldsAndError();
+        emit('close-modal');
+        router.push({ name: 'Chat' });
+      } else {
+        // Если авто-логина нет, переключаем на форму входа и показываем сообщение
+        const registeredUsername = registerUsername.value; // Сохраняем перед очисткой
+        clearFieldsAndError();
+        activeForm.value = 'login';
+        loginUsername.value = registeredUsername; // Предзаполняем имя пользователя
+        errorMessage.value = 'Регистрация успешна! Теперь вы можете войти.';
+        // Не закрываем модальное окно, чтобы пользователь мог войти
+      }
     } else {
-      errorMessage.value = data.message || 'Ошибка регистрации. Попробуйте другое имя пользователя.';
+      if (response.status === 400 && data.detail === "User already exsists") { // Опечатка "exsists" из вашего кода
+        errorMessage.value = "Пользователь с таким именем уже существует";
+      } else {
+        errorMessage.value = data.detail || data.message || 'Ошибка регистрации. Попробуйте еще раз.';
+      }
       console.error('Ошибка регистрации:', data);
     }
   } catch (error) {
@@ -136,36 +161,16 @@ const registerUser = async () => {
     errorMessage.value = 'Произошла ошибка при попытке регистрации. Попробуйте еще раз.';
   }
 };
-
-// --- Lifecycle Hooks and DOM interactions ---
-
-onMounted(() => {
-  // Use nextTick to ensure DOM elements are available if the modal is initially visible
-  nextTick(() => {
-
-    const showRegisterLink = document.getElementById('show-register');
-    const showLoginLink = document.getElementById('show-login');
-
-    if (showRegisterLink) showRegisterLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      showRegister();
-    });
-    if (showLoginLink) showLoginLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      showLogin();
-    });
-  });
-});
 </script>
 
 <template>
   <teleport to="body">
-    <div :class="['modal-overlay', { 'is-visible': isVisible }]" @click.self="emit('close-modal')">
+    <div :class="['modal-overlay', { 'is-visible': isVisible }]" @click.self="handleCloseModal">
       <div class="modal-content">
-        <button class="close-button" @click="emit('close-modal')">&times;</button>
-        <h2 id="modal-title" class="modal-title">Вход</h2>
+        <button class="close-button" @click="handleCloseModal">&times;</button>
+        <h2 id="modal-title" class="modal-title">{{ activeForm === 'login' ? 'Вход' : 'Регистрация' }}</h2>
 
-        <div id="login-form">
+        <div v-if="activeForm === 'login'">
           <div class="input-group mb-4">
             <label for="login-username" class="block text-gray-400 text-sm font-bold mb-2">Имя пользователя:</label>
             <input type="text" id="login-username" placeholder="Введите ваше имя" class="form-input" v-model="loginUsername">
@@ -174,13 +179,12 @@ onMounted(() => {
             <label for="login-password" class="block text-gray-400 text-sm font-bold mb-2">Пароль:</label>
             <input type="password" id="login-password" placeholder="Введите пароль" class="form-input" v-model="loginPassword" @keyup.enter="loginUser">
           </div>
-          <p v-if="errorMessage && !document.getElementById('register-form')?.classList.contains('hidden')" class="error-message text-red-400 text-center text-sm mb-4">{{ errorMessage }}</p>
-
+          <p v-if="errorMessage && activeForm === 'login'" class="error-message text-red-400 text-center text-sm mb-4">{{ errorMessage }}</p>
           <button id="login-button" type="button" class="button-primary font-bold mb-2" @click="loginUser">Войти</button>
-          <p class="text-center text-gray-400 text-base">Нет аккаунта? <a href="#" id="show-register" class="text-blue-400 hover:underline">Зарегистрироваться</a></p>
+          <p class="text-center text-gray-400 text-base">Нет аккаунта? <a href="#" class="text-blue-400 hover:underline" @click.prevent="showRegister">Зарегистрироваться</a></p>
         </div>
 
-        <div id="register-form" class="hidden">
+        <div v-if="activeForm === 'register'">
           <div class="input-group mb-4">
             <label for="register-username" class="block text-gray-400 text-sm font-bold mb-2">Имя пользователя:</label>
             <input type="text" id="register-username" placeholder="Введите ваше имя" class="form-input" v-model="registerUsername">
@@ -193,10 +197,9 @@ onMounted(() => {
             <label for="register-confirm-password" class="block text-gray-400 text-sm font-bold mb-2">Подтвердите пароль:</label>
             <input type="password" id="register-confirm-password" placeholder="Подтвердите пароль" class="form-input" v-model="registerConfirmPassword" @input="checkPasswordMismatch" @keyup.enter="registerUser">
           </div>
-          <p v-if="errorMessage && !document.getElementById('login-form')?.classList.contains('hidden')" class="error-message text-red-400 text-center text-sm mb-4">{{ errorMessage }}</p>
-
+          <p v-if="errorMessage && activeForm === 'register'" class="error-message text-red-400 text-center text-sm mb-4">{{ errorMessage }}</p>
           <button id="register-button" type="button" class="button-primary font-bold mb-2" @click="registerUser">Зарегистрироваться</button>
-          <p class="text-center text-gray-400 text-base">Уже есть аккаунт? <a href="#" id="show-login" class="text-blue-400 hover:underline">Войти</a></p>
+          <p class="text-center text-gray-400 text-base">Уже есть аккаунт? <a href="#" class="text-blue-400 hover:underline" @click.prevent="showLogin">Войти</a></p>
         </div>
       </div>
     </div>
@@ -204,19 +207,18 @@ onMounted(() => {
 </template>
 
 <style>
-/* Global modal styles can go here or in a dedicated modal.css */
-/* These styles ensure the modal appears correctly and is responsive */
+/* Ваши стили остаются без изменений */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent overlay */
+    background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* Ensure it's on top of other content */
+    z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -228,16 +230,16 @@ onMounted(() => {
 }
 
 .modal-content {
-    background-color: #1F2937; /* Darker background for the modal itself */
-    padding: 2.5rem 2rem;
-    border-radius: 0.75rem; /* Rounded corners */
-    max-width: 450px; /* Max width for readability */
-    width: 90%; /* Responsive width */
+    background-color: #1F2937; /* Tailwind bg-gray-800 */
+    padding: 2.5rem 2rem; /* 40px 32px */
+    border-radius: 0.75rem; /* 12px */
+    max-width: 450px;
+    width: 90%;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     position: relative;
-    color: #E5E7EB; /* Light text color */
-    transform: translateY(20px); /* Initial state for entry animation */
-    opacity: 0; /* Initial state for entry animation */
+    color: #E5E7EB; /* Tailwind text-gray-200 */
+    transform: translateY(20px);
+    opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
@@ -248,65 +250,67 @@ onMounted(() => {
 
 .close-button {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: 1rem; /* 16px */
+    right: 1rem; /* 16px */
     background: none;
     border: none;
-    font-size: 2rem;
-    color: #9CA3AF;
+    font-size: 2rem; /* 32px */
+    line-height: 1;
+    color: #9CA3AF; /* Tailwind text-gray-400 */
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
 .close-button:hover {
-    color: #E5E7EB;
+    color: #E5E7EB; /* Tailwind text-gray-200 */
 }
 
 .modal-title {
-    font-size: 2rem;
+    font-size: 2rem; /* 32px */
     font-weight: bold;
-    color: #93C5FD; /* Blue color for titles */
+    color: #93C5FD; /* Tailwind text-blue-300 */
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2rem; /* 32px */
 }
 
 .input-group label {
-    font-weight: 600;
+    font-weight: 600; /* semibold */
 }
 
 .form-input {
     width: 100%;
-    padding: 0.75rem 1rem;
-    background-color: #374151; /* Dark input background */
-    border: 1px solid #4B5563; /* Subtle border */
-    border-radius: 0.375rem;
-    color: #E5E7EB; /* Light text color in input */
+    padding: 0.75rem 1rem; /* 12px 16px */
+    background-color: #374151; /* Tailwind bg-gray-700 */
+    border: 1px solid #4B5563; /* Tailwind border-gray-600 */
+    border-radius: 0.375rem; /* 6px */
+    color: #E5E7EB; /* Tailwind text-gray-200 */
     outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .form-input::placeholder {
-    color: #9CA3AF;
+    color: #9CA3AF; /* Tailwind text-gray-400 */
 }
 
 .form-input:focus {
-    border-color: #60A5FA; /* Blue border on focus */
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+    border-color: #60A5FA; /* Tailwind border-blue-500 */
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5); /* Синяя тень при фокусе */
 }
 
 .button-primary {
     width: 100%;
-    padding: 0.75rem 1.5rem;
-    background-color: #60A5FA; /* Blue button */
+    padding: 0.75rem 1.5rem; /* 12px 24px */
+    background-color: #60A5FA; /* Tailwind bg-blue-500 */
     color: white;
-    border-radius: 0.375rem;
-    font-size: 1.125rem;
+    border-radius: 0.375rem; /* 6px */
+    font-size: 1.125rem; /* 18px */
+    font-weight: bold; /* Добавил для соответствия заголовку */
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
 .button-primary:hover {
-    background-color: #3B82F6; /* Darker blue on hover */
+    background-color: #3B82F6; /* Tailwind bg-blue-600 */
     transform: translateY(-1px);
 }
 
@@ -315,7 +319,7 @@ onMounted(() => {
 }
 
 .error-message {
-    color: #EF4444; /* Red for error messages */
-    font-weight: 500;
+    /* color: #EF4444; */ /* Tailwind text-red-500 - уже есть в <p> */
+    font-weight: 500; /* medium */
 }
 </style>
