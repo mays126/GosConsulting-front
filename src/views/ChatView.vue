@@ -7,6 +7,7 @@
     </div>
 
     <header class="chat-header">
+      <!-- Бургер только на мобильном -->
       <button
         class="burger-btn"
         @click="toggleSidebar"
@@ -22,6 +23,7 @@
     </header>
 
     <main class="chat-main">
+      <!-- Сайдбар: отображается по-разному в зависимости от экрана -->
       <aside
         class="sidebar"
         :class="{ 'sidebar-mobile': isMobile, 'sidebar-open': isSidebarOpen }"
@@ -39,12 +41,16 @@
       </aside>
 
       <section class="chat-area" :class="{ 'blurred': isMobile && isSidebarOpen }">
-
         <div class="messages-container">
-          <div v-if="messages.length === 0" class="empty-chat">Начните диалог с AI</div>
+          <div v-if="messages.length === 0" class="empty-chat">
+            Начните диалог с AI
+          </div>
           <transition-group name="message-transition" tag="div">
-            <div v-for="message in messages" :key="message.id"
-              :class="['chat-message', message.sender === 'user' ? 'from-user' : 'from-ai']">
+            <div
+              v-for="message in messages"
+              :key="message.id"
+              :class="['chat-message', message.sender === 'user' ? 'from-user' : 'from-ai']"
+            >
               <div class="bubble">
                 <strong>{{ message.sender === 'user' ? 'Вы' : 'ИИ' }}</strong>
                 <p>{{ message.text }}</p>
@@ -61,20 +67,28 @@
         </div>
 
         <div class="input-container">
-          <textarea ref="textareaRef" v-model="userQuery" @input="adjustTextareaHeight"
-            @keydown.enter.prevent="sendQuery" placeholder="Введите сообщение..." class="chat-input"
-            rows="1"></textarea>
+          <textarea
+            ref="textareaRef"
+            v-model="userQuery"
+            @input="adjustTextareaHeight"
+            @keydown.enter.prevent="sendQuery"
+            placeholder="Введите сообщение..."
+            class="chat-input"
+            rows="1"
+          ></textarea>
           <button @click="sendQuery" class="send-button" :disabled="loadingAiResponse || !userQuery.trim()">
             <svg viewBox="0 0 24 24" fill="currentColor" class="send-icon">
-              <path d="M7 11l5-5 5 5M7 13l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
+              <path d="M7 11l5-5 5 5M7 13l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>
       </section>
     </main>
-    <HistoryModal :isVisible="showHistoryModal" :historyItem="selectedHistoryItem" @close="closeHistoryModal"
-      @copy-query="copyQueryToInput" />
+    <HistoryModal
+      :isVisible="showHistoryModal"
+      :historyItem="selectedHistoryItem"
+      @close="closeHistoryModal"
+      @copy-query="copyQueryToInput"/>
   </div>
 </template>
 
