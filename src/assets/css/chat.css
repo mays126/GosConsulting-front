@@ -145,6 +145,7 @@
   
   /* 3. Сайдбар */
   .sidebar {
+    position: relative;
     width: 260px; /* Фиксированная ширина */
     background: linear-gradient(to bottom, #1e293b, #0f172a); /* Градиент */
     padding: 20px;
@@ -586,5 +587,13 @@
       filter: blur(2px) grayscale(0.7);
       pointer-events: none;
       user-select: none;
+    }
+    .refresh-btn {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 270px;
+      height: 40px;
     }
   }

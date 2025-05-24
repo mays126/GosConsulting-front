@@ -3,7 +3,6 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router'; // Импортируем настроенный роутер
 import './assets/css/main.css'; // Ваши глобальные стили
-import 'highlight.js/styles/atom-one-dark.css';
 
 const app = createApp(App);
 
