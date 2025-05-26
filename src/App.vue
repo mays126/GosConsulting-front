@@ -56,53 +56,58 @@ watch(() => localStorage.getItem('AccessToken'), (newValue, oldValue) => {
 
 
 const toggleMenu = (forceState) => {
-  const newState = forceState !== undefined ? forceState : !isMenuOpen.value;
-  if (newState === isMenuOpen.value) return;
+  return new Promise((resolve) => {
+    const newState = forceState !== undefined ? forceState : !isMenuOpen.value;
+    if (newState === isMenuOpen.value) {
+      resolve(); 
+      return;
+    }
 
-  isMenuOpen.value = newState;
-  const body = document.body;
-  const navigationElement = mainNavigationRef.value;
+    isMenuOpen.value = newState;
+    const body = document.body;
+    const navigationElement = mainNavigationRef.value;
 
-  if (isMenuOpen.value) {
-    lastScrollY.value = window.scrollY;
-    body.style.top = `-${lastScrollY.value}px`;
-    body.style.position = 'fixed';
-    body.style.width = '100%';
-    body.style.overflowY = 'hidden';
-    body.classList.add('menu-open');
-    if (navigationElement) navigationElement.style.visibility = 'visible';
-  } else {
-    body.classList.remove('menu-open');
-    if (navigationElement) {
-      const handleTransitionEnd = () => {
-        if (!isMenuOpen.value) {
-          navigationElement.style.visibility = 'hidden';
-          body.style.position = '';
-          body.style.top = '';
-          body.style.width = '';
-          body.style.overflowY = '';
-          window.scrollTo({ top: lastScrollY.value, behavior: 'auto' });
-        }
-        if (navigationElement.getAttribute('data-transition-listener') === 'true') {
-          navigationElement.removeEventListener('transitionend', handleTransitionEnd);
-          navigationElement.removeAttribute('data-transition-listener');
-        }
-      };
-      if (navigationElement.getAttribute('data-transition-listener') !== 'true') {
-        navigationElement.addEventListener('transitionend', handleTransitionEnd, { once: true });
-        navigationElement.setAttribute('data-transition-listener', 'true');
-      } else {
+    if (isMenuOpen.value) {
+      lastScrollY.value = window.scrollY;
+      body.style.top = `-${lastScrollY.value}px`;
+      body.style.position = 'fixed';
+      body.style.width = '100%';
+      body.style.overflowY = 'hidden';
+      body.classList.add('menu-open');
+      if (navigationElement) navigationElement.style.visibility = 'visible';
+    } else {
+      body.classList.remove('menu-open');
+      if (navigationElement) {
+        const handleTransitionEnd = () => {
           if (!isMenuOpen.value) {
-             navigationElement.style.visibility = 'hidden';
-             body.style.position = '';
-             body.style.top = '';
-             body.style.width = '';
-             body.style.overflowY = '';
-             window.scrollTo({ top: lastScrollY.value, behavior: 'auto' });
+            navigationElement.style.visibility = 'hidden';
+            body.style.position = '';
+            body.style.top = '';
+            body.style.width = '';
+            body.style.overflowY = '';
+            window.scrollTo({ top: lastScrollY.value, behavior: 'auto' });
           }
+          if (navigationElement.getAttribute('data-transition-listener') === 'true') {
+            navigationElement.removeEventListener('transitionend', handleTransitionEnd);
+            navigationElement.removeAttribute('data-transition-listener');
+          }
+        };
+        if (navigationElement.getAttribute('data-transition-listener') !== 'true') {
+          navigationElement.addEventListener('transitionend', handleTransitionEnd, { once: true });
+          navigationElement.setAttribute('data-transition-listener', 'true');
+        } else {
+            if (!isMenuOpen.value) {
+                navigationElement.style.visibility = 'hidden';
+                body.style.position = '';
+                body.style.top = '';
+                body.style.width = '';
+                body.style.overflowY = '';
+                window.scrollTo({ top: lastScrollY.value, behavior: 'auto' });
+            }
+        }
       }
     }
-  }
+  });
 };
 
 const openModal = () => { isModalVisible.value = true; };
@@ -119,7 +124,7 @@ const handleAuthSuccess = () => {
 const scrollToSection = async (sectionId) => {
   if (isMenuOpen.value) {
     toggleMenu(false);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   if (route.name !== 'Home') {
@@ -194,7 +199,7 @@ provide('navigateToHome', navigateToHome); // Для ChatView.vue
           <li><a href="#" @click.prevent="openModal(); toggleMenu(false);">Войти/Регистрация</a></li>
         </template>
         <template v-else>
-            <li><router-link :to="{ name: 'Chat' }" @click="toggleMenu(false)">Перейти в чат</router-link></li>
+            <li><router-link :to="{ name: 'Chat' }" @click="toggleMenu(false).then(() => { window.location.reload(); }).catch(error => console.error('Menu failed to close:', error))">Перейти в чат</router-link></li>
             <li><a href="#" @click.prevent="logout">Выйти</a></li>
         </template>
         <li><a href="#about-project" @click.prevent="scrollToSection('about-project')">О проекте</a></li>

@@ -7,9 +7,9 @@
     </div>
 
     <header class="chat-header">
-      <!-- Бургер только на мобильном -->
       <button
         class="burger-btn"
+        :class="{ open: isSidebarOpen }"
         @click="toggleSidebar"
         aria-label="Открыть меню"
       >
@@ -23,11 +23,9 @@
     </header>
 
     <main class="chat-main">
-      <!-- Сайдбар: отображается по-разному в зависимости от экрана -->
       <aside
+        v-if="!isMobile"
         class="sidebar"
-        :class="{ 'sidebar-mobile': isMobile, 'sidebar-open': isSidebarOpen }"
-        v-show="!isMobile || isSidebarOpen"
       >
         <h2>История</h2>
         <div v-if="loadingHistory" class="history-loading">Загрузка...</div>
@@ -39,6 +37,23 @@
         </ul>
         <button @click="fetchLastQueries" class="refresh-btn">Обновить</button>
       </aside>
+
+      <transition name="sidebar-slide">
+        <aside
+          v-if="isMobile && isSidebarOpen"
+          class="sidebar sidebar-mobile" 
+          >
+          <h2>История</h2>
+          <div v-if="loadingHistory" class="history-loading">Загрузка...</div>
+          <ul v-else class="history-list">
+            <li v-if="lastQueries.length === 0" class="empty-history">История пуста</li>
+            <li v-for="(item, index) in lastQueries" :key="item.id || index">
+              <button @click="openHistoryModal(item)" :title="item.question">{{ truncateQuery(item.question) }}</button>
+            </li>
+          </ul>
+          <button @click="fetchLastQueries" class="refresh-btn">Обновить</button>
+        </aside>
+      </transition>
 
       <section class="chat-area" :class="{ 'blurred': isMobile && isSidebarOpen }">
         <div class="messages-container">
